@@ -212,11 +212,11 @@ class Advanced extends Component
     private function syncSablierDataFromLabels(): void
     {
         $labels = $this->customLabelsAsMap();
-        $this->isSablierEnabled = str(data_get($labels, 'sablier.enable', 'false'))->lower()->value() === 'true';
-        $this->sablierGroup = data_get($labels, 'sablier.group') ?: str($this->application->name)->slug()->value();
-        $this->sablierNetworkAlias = data_get($labels, 'sablier.alias') ?: data_get(explode(',', $this->application->custom_network_aliases ?? ''), 0) ?: str($this->sablierGroup)->slug()->append('-sablier')->value();
-        $this->sablierSessionDuration = data_get($labels, 'sablier.session_duration', '10m');
-        $this->sablierTimeout = data_get($labels, 'sablier.timeout', '60s');
+        $this->isSablierEnabled = str($labels['sablier.enable'] ?? 'false')->lower()->value() === 'true';
+        $this->sablierGroup = ($labels['sablier.group'] ?? null) ?: str($this->application->name)->slug()->value();
+        $this->sablierNetworkAlias = ($labels['sablier.alias'] ?? null) ?: data_get(explode(',', $this->application->custom_network_aliases ?? ''), 0) ?: str($this->sablierGroup)->slug()->append('-sablier')->value();
+        $this->sablierSessionDuration = $labels['sablier.session_duration'] ?? '10m';
+        $this->sablierTimeout = $labels['sablier.timeout'] ?? '60s';
     }
 
     public function toggleSablierSettings(): void
@@ -244,7 +244,7 @@ class Advanced extends Component
             $middleware = "sablier-{$group}@file";
             $routerMiddlewareLabel = "traefik.http.routers.https-0-{$this->application->uuid}.middlewares";
             $labels = $this->customLabelsAsMap();
-            $middlewares = collect(explode(',', data_get($labels, $routerMiddlewareLabel, 'gzip')))
+            $middlewares = collect(explode(',', $labels[$routerMiddlewareLabel] ?? 'gzip'))
                 ->filter()
                 ->when($this->isSablierEnabled, fn ($items) => $items->contains($middleware) ? $items : $items->push($middleware))
                 ->when(! $this->isSablierEnabled, fn ($items) => $items->reject(fn ($item) => str($item)->startsWith('sablier-')))
