@@ -219,6 +219,14 @@ class Advanced extends Component
         $this->sablierTimeout = data_get($labels, 'sablier.timeout', '60s');
     }
 
+    public function toggleSablierSettings(): void
+    {
+        // The checkbox component triggers click actions before Livewire has hydrated
+        // the updated wire:model value, so explicitly toggle before saving.
+        $this->isSablierEnabled = ! $this->isSablierEnabled;
+        $this->saveSablierSettings();
+    }
+
     public function saveSablierSettings(): void
     {
         try {

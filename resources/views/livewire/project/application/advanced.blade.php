@@ -73,7 +73,7 @@
                     for reliable plugin cache behavior after restarts. Coolify still needs to generate the persistent
                     Traefik file-provider router for stopped containers.
                 </div>
-                <x-forms.checkbox id="isSablierEnabled" label="Enable Sablier Hibernate" instantSave="saveSablierSettings" canGate="update"
+                <x-forms.checkbox id="isSablierEnabled" label="Enable Sablier Hibernate" instantSave="toggleSablierSettings" canGate="update"
                     :canResource="$application" />
                 <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
                     <x-forms.input id="sablierGroup" label="Sablier Group" placeholder="my-app" canGate="update"
