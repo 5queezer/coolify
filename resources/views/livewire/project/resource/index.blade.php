@@ -241,6 +241,9 @@
                                     <template x-if="item.status.startsWith('running')">
                                         <div title="running" class="bg-success badge-dashboard"></div>
                                     </template>
+                                    <template x-if="item.status.startsWith('hibernated')">
+                                        <div title="hibernated" class="bg-warning badge-dashboard"></div>
+                                    </template>
                                     <template x-if="item.status.startsWith('exited')">
                                         <div title="exited" class="bg-error badge-dashboard"></div>
                                     </template>
@@ -293,6 +296,9 @@
                                     <template x-if="item.status.startsWith('running')">
                                         <div title="running" class="bg-success badge-dashboard"></div>
                                     </template>
+                                    <template x-if="item.status.startsWith('hibernated')">
+                                        <div title="hibernated" class="bg-warning badge-dashboard"></div>
+                                    </template>
                                     <template x-if="item.status.startsWith('exited')">
                                         <div title="exited" class="bg-error badge-dashboard"></div>
                                     </template>
@@ -344,6 +350,9 @@
                                     <div class="flex-1"></div>
                                     <template x-if="item.status.startsWith('running')">
                                         <div title="running" class="bg-success badge-dashboard"></div>
+                                    </template>
+                                    <template x-if="item.status.startsWith('hibernated')">
+                                        <div title="hibernated" class="bg-warning badge-dashboard"></div>
                                     </template>
                                     <template x-if="item.status.startsWith('exited')">
                                         <div title="exited" class="bg-error badge-dashboard"></div>

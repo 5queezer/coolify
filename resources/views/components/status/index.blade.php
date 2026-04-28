@@ -3,8 +3,13 @@
     'lastDeploymentLink' => null,
     'resource' => null,
 ])
+@php
+    $isHibernated = str($resource->status)->startsWith('hibernated') || (method_exists($resource, 'isHibernatedBySablier') && $resource->isHibernatedBySablier());
+@endphp
 <div class="flex flex-wrap items-center gap-1">
-    @if (str($resource->status)->startsWith('running'))
+    @if ($isHibernated)
+        <x-status.hibernated :status="$resource->status" />
+    @elseif (str($resource->status)->startsWith('running'))
         <x-status.running :status="$resource->status" :title="$title" :lastDeploymentLink="$lastDeploymentLink" />
     @elseif(str($resource->status)->startsWith('degraded'))
         <x-status.degraded :status="$resource->status" :title="$title" :lastDeploymentLink="$lastDeploymentLink" />
@@ -20,7 +25,7 @@
             </span>
         </div>
     @endif
-    @if (!str($resource->status)->contains('exited') && $showRefreshButton)
+    @if ((!str($resource->status)->contains('exited') || $isHibernated) && $showRefreshButton)
         <button wire:loading.remove.delay.shortest wire:target="manualCheckStatus" title="Refresh Status" wire:click='manualCheckStatus'
             class="dark:hover:fill-white fill-black dark:fill-warning">
             <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

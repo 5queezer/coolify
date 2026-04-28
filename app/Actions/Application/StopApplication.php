@@ -13,7 +13,7 @@ class StopApplication
 
     public string $jobQueue = 'high';
 
-    public function handle(Application $application, bool $previewDeployments = false, bool $dockerCleanup = true)
+    public function handle(Application $application, bool $previewDeployments = false, bool $dockerCleanup = true, bool $removeContainers = true)
     {
         $servers = collect([$application->destination->server]);
         if ($application?->additional_servers?->count() > 0) {
@@ -38,17 +38,18 @@ class StopApplication
                 $containersToStop = $containers->pluck('Names')->toArray();
 
                 foreach ($containersToStop as $containerName) {
-                    instant_remote_process(command: [
-                        "docker stop -t 30 $containerName",
-                        "docker rm -f $containerName",
-                    ], server: $server, throwError: false);
+                    $commands = ["docker stop -t 30 $containerName"];
+                    if ($removeContainers) {
+                        $commands[] = "docker rm -f $containerName";
+                    }
+                    instant_remote_process(command: $commands, server: $server, throwError: false);
                 }
 
-                if ($application->build_pack === 'dockercompose') {
+                if ($removeContainers && $application->build_pack === 'dockercompose') {
                     $application->deleteConnectedNetworks();
                 }
 
-                if ($dockerCleanup) {
+                if ($dockerCleanup && $removeContainers) {
                     CleanupDocker::dispatch($server, false, false);
                 }
             } catch (\Exception $e) {

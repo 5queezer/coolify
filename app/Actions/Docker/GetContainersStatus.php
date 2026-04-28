@@ -490,6 +490,9 @@ class GetContainersStatus
 
                     // Aggregate status after tracking restart counts
                     $aggregatedStatus = $this->aggregateApplicationStatus($application, $containerStatuses, $maxRestartCount);
+                    if ($aggregatedStatus && $application->isSablierEnabled() && str($aggregatedStatus)->startsWith('exited')) {
+                        $aggregatedStatus = 'hibernated:sablier';
+                    }
                     if ($aggregatedStatus) {
                         $statusFromDb = $application->status;
                         if ($statusFromDb !== $aggregatedStatus) {

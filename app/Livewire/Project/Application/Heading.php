@@ -133,6 +133,20 @@ class Heading extends Component
         StopApplication::dispatch($this->application, false, $this->docker_cleanup);
     }
 
+    public function hibernate()
+    {
+        $this->authorize('deploy', $this->application);
+
+        if (! $this->application->isSablierEnabled()) {
+            $this->dispatch('error', 'Sablier hibernation is not enabled for this application.');
+
+            return;
+        }
+
+        $this->dispatch('info', 'Hibernating application with Sablier.<br/>The stopped container will be kept so Sablier can wake it on demand.');
+        StopApplication::dispatch($this->application, false, false, false);
+    }
+
     public function restart()
     {
         $this->authorize('deploy', $this->application);

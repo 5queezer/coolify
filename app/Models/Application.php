@@ -780,7 +780,45 @@ class Application extends BaseModel
 
     public function isExited()
     {
-        return (bool) str($this->status)->startsWith('exited');
+        return (bool) str($this->realStatus())->startsWith('exited');
+    }
+
+    public function isSablierEnabled(): bool
+    {
+        if (str($this->sablierLabelValue('sablier.enable', 'false'))->lower()->value() === 'true') {
+            return true;
+        }
+
+        return str($this->sablierLabels())->contains('sablier-')
+            || str($this->custom_network_aliases ?? '')->contains('sablier');
+    }
+
+    public function isHibernatedBySablier(): bool
+    {
+        return $this->isSablierEnabled() && str($this->realStatus())->startsWith('hibernated');
+    }
+
+    private function sablierLabelValue(string $key, ?string $default = null): ?string
+    {
+        return collect(preg_split('/\r\n|\r|\n/', $this->sablierLabels()) ?: [])
+            ->filter(fn ($line) => str($line)->contains('='))
+            ->mapWithKeys(function ($line) {
+                [$labelKey, $labelValue] = explode('=', $line, 2);
+
+                return [trim($labelKey) => trim($labelValue)];
+            })
+            ->get($key, $default);
+    }
+
+    private function sablierLabels(): string
+    {
+        if (blank($this->custom_labels)) {
+            return '';
+        }
+
+        $decoded = base64_decode($this->custom_labels, true);
+
+        return $decoded === false ? $this->custom_labels : $decoded;
     }
 
     public function realStatus()
