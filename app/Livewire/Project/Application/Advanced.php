@@ -261,6 +261,8 @@ class Advanced extends Component
             $this->application->custom_labels = base64_encode(implode("\n", $lines));
             if ($this->isSablierEnabled) {
                 $this->application->custom_network_aliases = $alias;
+                $this->application->health_check_enabled = true;
+                $this->application->health_check_path = $this->application->health_check_path ?: '/';
             }
             $this->application->save();
             $this->syncSablierDataFromLabels();

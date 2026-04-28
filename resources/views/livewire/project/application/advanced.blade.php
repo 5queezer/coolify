@@ -71,7 +71,8 @@
                     Draft integration. Requires Traefik with the Sablier plugin and a build containing
                     <a class="underline" href="https://github.com/traefik/traefik/pull/13006" target="_blank">traefik/traefik#13006</a>
                     for reliable plugin cache behavior after restarts. Coolify still needs to generate the persistent
-                    Traefik file-provider router for stopped containers.
+                    Traefik file-provider router for stopped containers. Enabling Sablier also enables the application
+                    healthcheck so the first wake request waits until the container is ready.
                 </div>
                 <label class="label flex w-full max-w-full min-w-0 items-center gap-4 px-0">
                     <span class="flex min-w-0 grow gap-2 break-words">Enable Sablier Hibernate</span>
