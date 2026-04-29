@@ -209,12 +209,31 @@ class Advanced extends Component
         return $lines;
     }
 
+    private function customNetworkAliases(): array
+    {
+        $aliases = $this->application->custom_network_aliases_array;
+
+        if (is_array($aliases)) {
+            return $aliases;
+        }
+
+        if (blank($this->application->custom_network_aliases)) {
+            return [];
+        }
+
+        return collect(explode(',', $this->application->custom_network_aliases))
+            ->map(fn ($alias) => trim($alias))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
     private function syncSablierDataFromLabels(): void
     {
         $labels = $this->customLabelsAsMap();
         $this->isSablierEnabled = str($labels['sablier.enable'] ?? 'false')->lower()->value() === 'true';
         $this->sablierGroup = ($labels['sablier.group'] ?? null) ?: str($this->application->name)->slug()->value();
-        $this->sablierNetworkAlias = ($labels['sablier.alias'] ?? null) ?: data_get(explode(',', $this->application->custom_network_aliases ?? ''), 0) ?: str($this->sablierGroup)->slug()->append('-sablier')->value();
+        $this->sablierNetworkAlias = ($labels['sablier.alias'] ?? null) ?: data_get($this->customNetworkAliases(), 0) ?: str($this->sablierGroup)->slug()->append('-sablier')->value();
         $this->sablierSessionDuration = $labels['sablier.session_duration'] ?? '10m';
         $this->sablierTimeout = $labels['sablier.timeout'] ?? '60s';
     }
@@ -235,23 +254,32 @@ class Advanced extends Component
                 'isSablierEnabled' => 'boolean',
                 'sablierGroup' => 'nullable|string|max:255',
                 'sablierNetworkAlias' => 'nullable|string|max:255',
-                'sablierSessionDuration' => 'required|string|max:32',
-                'sablierTimeout' => 'required|string|max:32',
+                'sablierSessionDuration' => ['required', 'string', 'max:32', 'regex:/^(\d+(ns|us|µs|ms|s|m|h))+$/'],
+                'sablierTimeout' => ['required', 'string', 'max:32', 'regex:/^(\d+(ns|us|µs|ms|s|m|h))+$/'],
             ]);
 
             $group = str($this->sablierGroup ?: $this->application->name)->slug()->value();
             $alias = str($this->sablierNetworkAlias ?: "{$group}-sablier")->slug()->value();
             $middleware = "sablier-{$group}@file";
-            $routerMiddlewareLabel = "traefik.http.routers.https-0-{$this->application->uuid}.middlewares";
             $labels = $this->customLabelsAsMap();
-            $middlewares = collect(explode(',', $labels[$routerMiddlewareLabel] ?? 'gzip'))
-                ->filter()
-                ->when($this->isSablierEnabled, fn ($items) => $items->contains($middleware) ? $items : $items->push($middleware))
-                ->when(! $this->isSablierEnabled, fn ($items) => $items->reject(fn ($item) => str($item)->startsWith('sablier-')))
-                ->implode(',');
 
             $lines = $this->decodedCustomLabels();
-            $lines = $this->setCustomLabel($lines, $routerMiddlewareLabel, $middlewares ?: 'gzip');
+            foreach ($labels as $key => $value) {
+                if (! str($key)->startsWith('traefik.http.routers.') || ! str($key)->endsWith('.middlewares')) {
+                    continue;
+                }
+
+                $middlewares = collect(explode(',', $value))
+                    ->map(fn ($item) => trim($item))
+                    ->filter()
+                    ->reject(fn ($item) => str($item)->startsWith('sablier-'))
+                    ->when($this->isSablierEnabled, fn ($items) => $items->push($middleware))
+                    ->unique()
+                    ->implode(',');
+
+                $lines = $this->setCustomLabel($lines, $key, $middlewares ?: null);
+            }
+
             $lines = $this->setCustomLabel($lines, 'sablier.enable', $this->isSablierEnabled ? 'true' : null);
             $lines = $this->setCustomLabel($lines, 'sablier.group', $this->isSablierEnabled ? $group : null);
             $lines = $this->setCustomLabel($lines, 'sablier.alias', $this->isSablierEnabled ? $alias : null);
@@ -259,8 +287,15 @@ class Advanced extends Component
             $lines = $this->setCustomLabel($lines, 'sablier.timeout', $this->isSablierEnabled ? $this->sablierTimeout : null);
 
             $this->application->custom_labels = base64_encode(implode("\n", $lines));
+            $aliases = collect($this->customNetworkAliases())
+                ->reject(fn ($item) => $item === $this->sablierNetworkAlias || str($item)->endsWith('-sablier'))
+                ->when($this->isSablierEnabled, fn ($items) => $items->push($alias))
+                ->unique()
+                ->values();
+            $this->application->custom_network_aliases = $aliases->isEmpty() ? null : $aliases->toJson();
             if ($this->isSablierEnabled) {
-                $this->application->custom_network_aliases = $alias;
+                $this->application->health_check_enabled = true;
+                $this->application->health_check_path = $this->application->health_check_path ?: '/';
             }
             $this->application->save();
             $this->syncSablierDataFromLabels();
