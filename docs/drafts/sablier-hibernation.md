@@ -67,11 +67,12 @@ Fields:
 ## Proposed implementation phases
 
 1. Store Sablier settings on the application, initially via labels/custom_network_aliases.
-2. Add a server-side reconciler that scans enabled applications per server and writes `sablier-apps.yml`.
-3. Ensure proxy generation preserves/installs the Sablier Traefik plugin only when supported.
-4. Regenerate dynamic config on application save, deploy, domain change, port change, and delete.
-5. Add tests for generated labels and dynamic config.
+2. Add a server-side reconciler that scans enabled applications per server and writes `sablier-apps.yml` from current Coolify state only. The reconciler must delete the generated file when no active routes remain instead of writing empty `http: {}` / `routers: {}` YAML, because Traefik rejects those standalone empty sections.
+3. Keep generated-route artifacts out of the watched dynamic directory. `.bak`, `.disabled`, and other generated Sablier leftovers should be quarantined outside `proxy/dynamic` so the file provider cannot load stale groups.
+4. Ensure proxy generation preserves/installs the Sablier Traefik plugin only when supported.
+5. Regenerate dynamic config on Sablier setting save, application hibernate/stop, deploy, domain change, port change, and delete.
+6. Add tests for generated labels, dynamic config, stale-route pruning, and the "no routes means delete file" case.
 
 ## Draft PR scope
 
-This PR intentionally only adds UI scaffolding and label/alias persistence. The proxy dynamic-config reconciler should be added before marking the feature ready for review.
+This PR now includes the first server-side reconciler pass, but the feature should stay draft until proxy plugin installation/support detection, deploy/delete hooks, and broader integration tests are complete.

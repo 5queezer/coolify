@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Project\Application;
 
+use App\Actions\Proxy\ReconcileSablierDynamicConfiguration;
 use App\Models\Application;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Validate;
@@ -298,8 +299,9 @@ class Advanced extends Component
                 $this->application->health_check_path = $this->application->health_check_path ?: '/';
             }
             $this->application->save();
+            ReconcileSablierDynamicConfiguration::run($this->application->destination->server);
             $this->syncSablierDataFromLabels();
-            $this->dispatch('success', 'Sablier settings saved. Regenerate the proxy dynamic configuration and redeploy the application.');
+            $this->dispatch('success', 'Sablier settings saved and proxy dynamic configuration reconciled.');
             $this->dispatch('configurationChanged');
         } catch (\Throwable $e) {
             handleError($e, $this);

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Application;
 
+use App\Actions\Proxy\ReconcileSablierDynamicConfiguration;
 use App\Actions\Server\CleanupDocker;
 use App\Events\ServiceStatusChanged;
 use App\Models\Application;
@@ -54,6 +55,12 @@ class StopApplication
                 }
             } catch (\Exception $e) {
                 return $e->getMessage();
+            }
+        }
+
+        if ($application->isSablierEnabled()) {
+            foreach ($servers as $server) {
+                ReconcileSablierDynamicConfiguration::run($server, $removeContainers ? [$application->id] : []);
             }
         }
 
