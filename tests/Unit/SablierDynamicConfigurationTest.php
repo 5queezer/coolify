@@ -48,6 +48,7 @@ it('generates persistent file-provider routes from current sablier applications 
 
     expect($parsed['http']['routers'])->toHaveCount(2)
         ->and($parsed['http']['middlewares']['sablier-pearl']['plugin']['sablier']['group'])->toBe('pearl')
+        ->and($parsed['http']['routers']['sablier-pearl-0']['priority'])->toBe(10000)
         ->and($parsed['http']['middlewares']['sablier-pearl']['plugin']['sablier']['sessionDuration'])->toBe('20m')
         ->and($parsed['http']['middlewares']['sablier-pearl']['plugin']['sablier']['timeout'])->toBe('90s')
         ->and($parsed['http']['services']['sablier-pearl']['loadBalancer']['servers'][0]['url'])->toBe('http://pearl-sablier:3000');

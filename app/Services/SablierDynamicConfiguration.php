@@ -48,6 +48,7 @@ class SablierDynamicConfiguration
                 $router = [
                     'entryPoints' => [$domain['scheme'] === 'https' ? 'https' : 'http'],
                     'middlewares' => [$definition['middleware']],
+                    'priority' => $definition['priority'],
                     'service' => $definition['service'],
                     'rule' => "Host(`{$domain['host']}`)",
                 ];
@@ -103,6 +104,7 @@ class SablierDynamicConfiguration
             'middleware' => 'sablier-'.$group,
             'router_prefix' => 'sablier-'.$group,
             'service' => 'sablier-'.$group,
+            'priority' => (int) ($labels['sablier.priority'] ?? 10000),
             'sablier_url' => $labels['sablier.url'] ?? 'http://sablier:10000',
             'session_duration' => $labels['sablier.session_duration'] ?? '10m',
             'timeout' => $labels['sablier.timeout'] ?? '60s',
