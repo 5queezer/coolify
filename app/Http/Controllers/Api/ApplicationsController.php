@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Application\CleanupPreviewDeployment;
 use App\Actions\Application\LoadComposeFile;
 use App\Actions\Application\StopApplication;
+use App\Actions\Proxy\ReconcileSablierDynamicConfiguration;
 use App\Actions\Service\StartService;
 use App\Enums\BuildPackTypes;
 use App\Http\Controllers\Controller;
@@ -2795,6 +2796,15 @@ class ApplicationsController extends Controller
             $application->custom_labels = str(implode('|coolify|', generateLabelsApplication($application)))->replace('|coolify|', "\n");
         }
         $application->save();
+
+        if ($application->isSablierEnabled() && $request->hasAny([
+            'custom_labels',
+            'custom_network_aliases',
+            'domains',
+            'ports_exposes',
+        ])) {
+            ReconcileSablierDynamicConfiguration::run($server);
+        }
 
         if ($instantDeploy) {
             $deployment_uuid = new Cuid2;
