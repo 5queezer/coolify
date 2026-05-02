@@ -181,7 +181,7 @@ class Index extends Component
             'name' => $item->name,
             'fqdn' => $item->fqdn ?? null,
             'description' => $item->description ?? null,
-            'status' => $item->status ?? '',
+            'status' => $this->displayStatus($item),
             'server_status' => $item->server_status ?? null,
             'hrefLink' => $item->hrefLink ?? '',
             'destination' => [
@@ -194,5 +194,14 @@ class Index extends Component
                 'name' => $tag->name,
             ])->values()->toArray(),
         ])->values()->toArray();
+    }
+
+    private function displayStatus(mixed $item): string
+    {
+        if (method_exists($item, 'isHibernatedBySablier') && $item->isHibernatedBySablier()) {
+            return 'hibernated:sablier';
+        }
+
+        return $item->status ?? '';
     }
 }

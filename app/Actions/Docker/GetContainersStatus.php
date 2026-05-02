@@ -364,7 +364,7 @@ class GetContainersStatus
         $notRunningApplications = $this->applications->pluck('id')->diff($foundApplications);
         foreach ($notRunningApplications as $applicationId) {
             $application = $this->applications->where('id', $applicationId)->first();
-            if (str($application->status)->startsWith('exited')) {
+            if (str($application->status)->startsWith('exited') || str($application->status)->startsWith('hibernated')) {
                 continue;
             }
 
@@ -383,9 +383,11 @@ class GetContainersStatus
                 // Keep it as degraded if it was recently in a crash loop
                 $application->update(['status' => 'degraded:unhealthy']);
             } else {
+                $status = $application->isSablierEnabled() ? 'hibernated:sablier' : 'exited';
+
                 // Reset restart count when application exits completely
                 $application->update([
-                    'status' => 'exited',
+                    'status' => $status,
                     'restart_count' => 0,
                     'last_restart_at' => null,
                     'last_restart_type' => null,
